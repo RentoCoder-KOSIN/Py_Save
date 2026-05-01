@@ -1,0 +1,13 @@
+LICENSE
+README.md
+pyproject.toml
+py_save/__init__.py
+py_save/main.py
+py_save/pygame_save.py
+py_save/save_manager.py
+py_save.egg-info/PKG-INFO
+py_save.egg-info/SOURCES.txt
+py_save.egg-info/dependency_links.txt
+py_save.egg-info/entry_points.txt
+py_save.egg-info/requires.txt
+py_save.egg-info/top_level.txt

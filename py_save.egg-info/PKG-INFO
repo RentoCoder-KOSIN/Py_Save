@@ -1,0 +1,129 @@
+Metadata-Version: 2.4
+Name: py_save
+Version: 1.0.0
+Summary: Pythonのゲーム向けセーブデータ管理ライブラリ
+Author-email: RentoCoder-KOSIN <konosiniti@gmail.com>
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pygame>=2.0.0
+Dynamic: license-file
+
+# py_save
+
+ゲーム向け SQLite セーブデータ管理ライブラリ。  
+標準ライブラリのみで動く `SaveManager` と、pygame 連携の `PygameSaveManager` を提供します。
+
+## インストール
+
+```bash
+pip install py_save
+```
+
+## クイックスタート
+
+```python
+from py_save import SaveManager
+
+mgr = SaveManager("saves/")
+
+# 作成
+mgr.create(1, {"player": "Alice", "level": 1, "hp": 100})
+
+# 読み込み
+data = mgr.load(1)
+
+# 全体保存
+data["level"] = 2
+mgr.save(1, data, play_time=3600)
+
+# 部分更新
+mgr.update(1, {"hp": 80})
+
+# 消去
+mgr.delete(1)
+```
+
+## pygame 連携
+
+```python
+import pygame
+from py_save import PygameSaveManager
+
+mgr = PygameSaveManager("saves/", autosave_sec=300)
+
+# オートセーブ用データ取得関数を登録
+mgr.set_data_getter(lambda: {
+    "player": player.name,
+    "hp":     player.hp,
+    "pos":    [player.x, player.y],
+})
+
+# ゲームループ
+while running:
+    for event in pygame.event.get():
+        # F5 クイックセーブ / F9 クイックロード
+        result = mgr.handle_keydown(
+            event,
+            quicksave_key=pygame.K_F5,
+            quickload_key=pygame.K_F9,
+        )
+
+    # オートセーブチェック（毎フレーム）
+    mgr.tick()
+
+    # セーブ画面にスロット一覧を描画
+    mgr.render_slot_list(screen, font, selected_slot=current_slot)
+```
+
+## API 一覧
+
+### SaveManager
+
+| メソッド | 説明 |
+|---|---|
+| `create(slot, data, play_time, overwrite)` | スロット新規作成 |
+| `load(slot)` | データ読み込み（メタキー `_*` 付き） |
+| `save(slot, data, play_time)` | 全体を上書き保存 |
+| `update(slot, fields, play_time)` | 指定フィールドのみ部分更新 |
+| `delete(slot)` | スロット消去 |
+| `exists(slot)` | スロット存在確認 |
+| `list()` | 全スロットのメタ情報一覧 |
+| `copy(src, dst)` | スロットのコピー |
+| `restore_backup(slot)` | バックアップから復元 |
+
+### PygameSaveManager（SaveManager を継承）
+
+| メソッド | 説明 |
+|---|---|
+| `set_data_getter(fn)` | オートセーブ用データ取得関数を登録 |
+| `tick()` | ゲームループで毎フレーム呼ぶ。オートセーブを自動実行 |
+| `handle_keydown(event, ...)` | F5/F9 などのキーでクイックセーブ/ロード |
+| `save_with_time(slot, data)` | プレイ時間を自動計算して保存 |
+| `session_time()` | 現セッションの経過秒数 |
+| `total_play_time(slot)` | 累計プレイ時間（秒） |
+| `format_play_time(sec)` | `"HH:MM:SS"` 形式に変換 |
+| `render_slot_list(surface, font, ...)` | スロット一覧を pygame に描画 |
+
+### 例外
+
+| 例外 | 発生条件 |
+|---|---|
+| `SlotNotFoundError` | 存在しないスロットへのアクセス |
+| `SlotAlreadyExistsError` | `overwrite=False` で既存スロットに `create` |
+
+## CLI ツール
+
+```bash
+py_save list               # スロット一覧
+py_save show 1             # スロット1の中身を表示
+py_save delete autosave    # autosave スロットを削除
+py_save --dir path/to/saves list   # フォルダ指定
+```
+
+## ライセンス
+
+MIT License
